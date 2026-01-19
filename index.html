@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZTorch LABS</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .main-container {
+            position: relative;
+            width: 92%;
+            max-width: 1600px;
+            height: 90%;
+            margin: 5vh auto;
+            background: rgba(15, 15, 20, 0.45);
+            border-radius: 32px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            display: flex;
+        }
+
+        .left-content {
+            flex: 2;
+            padding: 50px 60px;
+            display: flex;
+            flex-direction: column;
+            background: rgba(10, 10, 15, 0.5);
+        }
+
+        .right-panel {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.015);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-left: 1px solid rgba(255, 255, 255, 0.06);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        #canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 4.2rem;
+            font-weight: 800;
+            margin: 0 0 40px 0;
+            letter-spacing: -1px;
+            color: #ffffff;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.8s ease-out forwards;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px 20px;
+            margin-bottom: 40px;
+        }
+
+        .card, .contact-block {
+            background: rgba(20, 20, 28, 0.55);
+            border-radius: 16px;
+            padding: 22px 26px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            transition: all 0.35s ease;
+            cursor: pointer;
+            user-select: none;
+            opacity: 0;
+            transform: translateY(35px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .card:nth-child(1) { animation: fadeUp 0.55s ease-out 0.15s forwards; }
+        .card:nth-child(2) { animation: fadeUp 0.55s ease-out 0.20s forwards; }
+        .card:nth-child(3) { animation: fadeUp 0.55s ease-out 0.25s forwards; }
+        .card:nth-child(4) { animation: fadeUp 0.55s ease-out 0.30s forwards; }
+        .card:nth-child(5) { animation: fadeUp 0.55s ease-out 0.35s forwards; }
+        .contact-block           { animation: fadeUp 0.55s ease-out 0.45s forwards; }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card:hover, .contact-block:hover {
+            transform: translateY(-6px) scale(1.02);
+            background: rgba(30, 30, 40, 0.75);
+            border-color: rgba(255, 255, 255, 0.14);
+        }
+
+        .card .title {
+            font-size: 1.28rem;
+            font-weight: 600;
+            color: #d0d0ff;
+            margin-bottom: 8px;
+        }
+
+        .card:hover .title {
+            color: #ffffff;
+        }
+
+        .card span {
+            opacity: 0.68;
+            font-size: 0.94rem;
+            line-height: 1.4;
+        }
+
+        .contact-block {
+            margin-top: auto;
+            text-align: center;
+            font-size: 1.22rem;
+            font-weight: 500;
+            padding: 24px;
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .modal.show { opacity: 1; }
+
+        .modal-content {
+            background: rgba(20, 20, 30, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 520px;
+            width: 90%;
+            transform: scale(0.94);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .close {
+            position: absolute;
+            top: 14px;
+            right: 20px;
+            font-size: 32px;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .close:hover { color: #fff; }
+
+        .modal h2 { margin-top: 0; color: #ffffff; }
+
+        @media (max-width: 1100px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .cards-grid { grid-template-columns: 1fr; } .left-content { padding: 40px 30px; } h1 { font-size: 3.4rem; } }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="left-content">
+            <h1>ZTorch LABS</h1>
+
+            <div class="cards-grid">
+                <div class="card" data-type="games" data-url="https://dash.zov.tatar">
+                    <div class="title">ZTorch Games</div>
+                    <span>частный игровой хостинг</span>
+                </div>
+
+                <div class="card" data-type="networks">
+                    <div class="title">ZTorch Networks</div>
+                    <span>частный хостинг сайтов и VPS</span>
+                </div>
+
+                <div class="card" data-type="brival">
+                    <div class="title">Brival</div>
+                    <span>приватный SMP Minecraft</span>
+                </div>
+
+                <div class="card" data-type="email">
+                    <div class="title">Email</div>
+                    <span>крутая почта на @zov.tatar</span>
+                </div>
+
+                <div class="card" data-type="status" data-url="https://stats.uptimerobot.com/YVedstkk0s">
+                    <div class="title">Status page</div>
+                    <span>состояние всех сервисов</span>
+                </div>
+            </div>
+
+            <div class="contact-block" data-type="contact">
+                Связь
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <canvas id="canvas"></canvas>
+            <div class="glass-overlay"></div>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">×</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        // ─── Canvas / Particles (без изменений) ────────────────────────────────────────
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            init();
+        }
+
+        const particlesArray = [];
+        const numberOfParticles = 60;
+        const mouse = { x: null, y: null, radius: 160 };
+
+        window.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+
+        class Particle {
+            constructor() {
+                this.size = Math.random() * 2.2 + 0.8;
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.speedX = (Math.random() - 0.5) * 0.6;
+                this.speedY = (Math.random() - 0.5) * 0.6;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(240, 240, 255, 0.85)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particlesArray.length = 0;
+            for (let i = 0; i < numberOfParticles; i++) particlesArray.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particlesArray.forEach(p => {
+                p.update();
+                p.draw();
+                // упрощённо — соединения как раньше
+                particlesArray.forEach(p2 => {
+                    if (p === p2) return;
+                    const dist = Math.hypot(p2.x - p.x, p2.y - p.y);
+                    if (dist < 110) {
+                        ctx.strokeStyle = `rgba(220,220,255,${1 - dist/110})`;
+                        ctx.lineWidth = 1.1;
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                });
+                if (mouse.x && mouse.y) {
+                    const dist = Math.hypot(mouse.x - p.x, mouse.y - p.y);
+                    if (dist < mouse.radius) {
+                        ctx.strokeStyle = `rgba(200,200,255,${1 - dist/mouse.radius*0.7})`;
+                        ctx.lineWidth = 1.2;
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.stroke();
+                    }
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        animate();
+
+        // ─── Клик по карточкам и блоку связи ───────────────────────────────────────────
+        const modal = document.getElementById('modal');
+        const modalBody = document.getElementById('modal-body');
+
+        document.querySelectorAll('.card, .contact-block').forEach(el => {
+            el.addEventListener('click', () => {
+                const type = el.dataset.type;
+                const url = el.dataset.url;
+
+                if (url) {
+                    window.open(url, '_blank');
+                    return;
+                }
+
+                let content = '';
+
+                switch (type) {
+                    case 'networks':
+                        content = `
+                        <h2>ZTorch Networks</h2>
+                        <p>Приватный хостинг сайтов и VPS</p>
+                        <br>
+                        <p>🛡 <strong>Закрытая инфраструктура</strong></p>
+                        <p>Хостинг не является публичным сервисом.</p>
+                        <p>Доступ предоставляется только после ручной модерации и согласования с администрацией.</p>
+                        `;
+                        break;
+                    case 'brival':
+                        content = `<h2>Brival</h2><p>Приватный Minecraft SMP</p>
+                        <p>Сервер работает в закрытом режиме и не доступен для свободного входа.</p>
+                        <p>Доступ выдаётся вручную после согласования с администрацией.</p>
+                        `;
+                        break;
+                    case 'email':
+                        content = `<h2>Email @zov.tatar</h2><p>Современная почта</p>
+                        <p> Открытая регистрация почтовых ящиков отключена.</p>
+                        <p>Для получения доступа свяжитесь с администрацией.</p>`;
+                        break;
+                    case 'contact':
+                        content = `
+                            <h2>Связь с нами</h2>
+                            <p><strong>Email:</strong> admin@zov.tatar</p>
+                            <p><strong>Discord:</strong> <a href="https://discord.gg/7fwFFSDmMe">https://discord.gg/7fwFFSDmMe</a></p>
+                            <p>По вопросам — пиши, ответим быстро.</p>
+                        `;
+                        break;
+                    default:
+                        content = `<h2>Ошибка</h2><p>Неизвестный раздел</p>`;
+                }
+
+                modalBody.innerHTML = content;
+                modal.style.display = 'flex';
+                setTimeout(() => modal.classList.add('show'), 20);
+            });
+        });
+
+        function closeModal() {
+            modal.classList.remove('show');
+            setTimeout(() => modal.style.display = 'none', 400);
+        }
+
+        modal.addEventListener('click', e => {
+            if (e.target === modal) closeModal();
+        });
+    </script>
+</body>
+</html>
